@@ -1,38 +1,37 @@
-/* data "aws_organizations_organization" "org" {}
-
-data "aws_organizations_organizational_units" "ou" {
-  parent_id = data.aws_organizations_organization.org.roots[0].id
-} */
+data "aws_organizations_organization" "org" {}
 
 
 
+## Denies Users from launching EC2s with public IPs
 
-# Create an SCP that denies the creation of S3 buckets that starts with 'inception-' name
-resource "aws_organizations_policy" "deny_public_s3_with_name_inception" {
-  content = jsonencode({
-    "Version": "2012-10-17",
-    "Statement": [
-      {
-        "Effect": "Deny",
-        "Action": [
-          "s3:CreateBucket"
-        ],
-        "Resource": [
-        "arn:aws:s3:::inception-*"
+data "aws_iam_policy_document" "limit_ec2_instance_types_document" {
+  statement {
+      sid    = "LimitEC2InstanceTypes"
+      effect = "Deny"
+
+      actions = [
+        "ec2:RunInstances",
+        "ec2:StartInstances"
       ]
+
+      resources = ["*"]
+
+      condition {
+        test     = "StringNotEquals"
+        variable = "ec2:InstanceType"
+        values   = var.allowed_ec2_instance_types
       }
-    ]
-  })
-
-
-  description = "Prevent the creation of public S3 buckets"
-  name = "deny_public_s3_with_name_inception-"
-  /* name_prefix = "DenyS3withinception-" */
-  type        = "SERVICE_CONTROL_POLICY"
+  }
 }
 
-# Attach the SCP to the root of the organization
-resource "aws_organizations_policy_attachment" "deny_public_s3_with_name_inception_attachment" {
-  policy_id = aws_organizations_policy.deny_public_s3_with_name_inception.id
-  target_id = "ou-ldp3-zmega68y"
+resource "aws_organizations_policy" "limit_ec2_instance_type" {
+  name        = "Limit EC2 instance types"
+  description = "Limit EC2 instance types"
+
+  content = data.aws_iam_policy_document.limit_ec2_instance_types_document.json
+}
+
+resource "aws_organizations_policy_attachment" "limit_ec2_instance_type_attachment" {
+  policy_id = aws_organizations_policy.limit_ec2_instance_type.id
+  target_id = data.aws_organizations_organization.org.id
 }
