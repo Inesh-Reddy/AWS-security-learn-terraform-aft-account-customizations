@@ -1,6 +1,6 @@
-data "aws_organizations_organization" "org" {}
+/* data "aws_organizations_organization" "org" {} */
 
-
+data "aws_caller_identity" "current" {}
 
 ## Denies Users from launching EC2s with public IPs
 
@@ -33,5 +33,5 @@ resource "aws_organizations_policy" "limit_ec2_instance_type" {
 
 resource "aws_organizations_policy_attachment" "limit_ec2_instance_type_attachment" {
   policy_id = aws_organizations_policy.limit_ec2_instance_type.id
-  target_id = data.aws_organizations_organization.org.id
+  target_id = data.aws_caller_identity.current.account_id
 }
