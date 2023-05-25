@@ -23,7 +23,12 @@ resource "aws_organizations_policy" "deny_public_s3_with_name_inception" {
 data "aws_caller_identity" "current" {}
 
 # Attach the SCP to the root of the organization
-resource "aws_organizations_policy_attachment" "deny_public_s3_with_name_inception_attachment" {
+/* resource "aws_organizations_policy_attachment" "deny_public_s3_with_name_inception_attachment" {
   policy_id = aws_organizations_policy.deny_public_s3_with_name_inception.id
   target_id = "${data.aws_caller_identity.current.account_id}"
+} */
+
+resource "aws_organizations_policy_attachment" "deny_public_s3_with_name_inception_attachment" {
+  policy_id = aws_organizations_policy.deny_public_s3_with_name_inception.id
+  target_id = aws_organizations_organizational_unit.deny_public_s3_with_name_inception.id
 }
